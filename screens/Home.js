@@ -3,8 +3,9 @@ import { View, Text, Button, TextInput, StyleSheet, FlatList, TouchableOpacity }
 import auth from '@react-native-firebase/auth'
 import Loader from '../components/Loader'
 import { signOut } from '../utils/auth'
-import { searchCity, getCityCoords } from '../utils/city'
+import { searchCity, getCityCoords, searchCityByCoords, getCurrentLocation } from '../utils/city'
 import { searchRestaurants, getRestaurants } from '../utils/restaurant'
+import Geolocation from '@react-native-community/geolocation'
 
 const Restaurant = ({ name }) => {
   return (
@@ -54,8 +55,38 @@ const Home = ({ navigation }) => {
         })
     }
   }
+  const handleOnUseMyLocation = () => {
+    setLoading(true)
+    Geolocation.getCurrentPosition(info => {
+      const { coords } = info;
+      const latLng = {
+        lat: coords.latitude,
+        lng: coords.longitude,
+      }
 
-  if (initializing) return <Loader />
+      searchCityByCoords(latLng)
+        .then((response) => response.json())
+        .then((json) => {
+          const cityCoords = getCityCoords(json.results)
+          const currentLocation = getCurrentLocation(json.results)
+
+          setCity(currentLocation)
+          
+          return searchRestaurants(cityCoords)
+        })
+        .then((response) => response.json())
+        .then(json => {
+          const data = getRestaurants(json.results)
+
+          setRestaurants(data)
+          setLoading(false)
+        })
+    });
+  }
+
+  if (initializing) {
+    return <Loader />
+  }
 
   if (!user) {
     navigation.push('LogIn')
@@ -82,6 +113,9 @@ const Home = ({ navigation }) => {
           />
         </TouchableOpacity>
       </View>
+      <TouchableOpacity>
+        <Text style={styles.useMyLocationText} onPress={handleOnUseMyLocation}>Use my location</Text>
+      </TouchableOpacity>
       <View style={styles.restaurantsView}>
         {restaurants.length > 0 ? (
           <>
@@ -147,8 +181,11 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   restaurantsView: {
-    height: 400
+    height: 380
   },
+  useMyLocationText: {
+    marginBottom: 16,
+  }
 })
 
 export default Home
