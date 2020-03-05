@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { View, Text, Button, TextInput, StyleSheet, FlatList, TouchableOpacity } from 'react-native'
+import { View, Text, Button, TextInput, StyleSheet, FlatList, TouchableOpacity, SafeAreaView, Alert } from 'react-native'
 import auth from '@react-native-firebase/auth'
 import Loader from '../components/Loader'
 import { signOut } from '../utils/auth'
@@ -53,6 +53,15 @@ const Home = ({ navigation }) => {
           setRestaurants(data)
           setLoading(false)
         })
+    } else {
+      Alert.alert(
+        'City',
+        'The city input is required',
+        [
+          {text: 'OK', onPress: () => console.log('OK Pressed')},
+        ],
+        {cancelable: false},
+      );
     }
   }
   const handleOnUseMyLocation = () => {
@@ -89,52 +98,60 @@ const Home = ({ navigation }) => {
   }
 
   if (!user) {
-    navigation.push('LogIn')
-
-    return <Loader />
+    return (
+      <SafeAreaView>
+        <View style={styles.pleaseLoginView}>
+          <Text style={styles.pleaseText}>Please, </Text>
+          <Button style={styles.pleaseBtn} title="Log In" onPress={() => navigation.push('LogIn')} />
+        </View>
+      </SafeAreaView>
+    )
   }
 
   return (
-    <View style={styles.view}>
-      <Text style={styles.textHello}>Hello! {user.email}</Text>
-      <Text style={styles.textSearch}>Search restaurants</Text>
-      <View style={styles.viewInput}>
-        <TextInput
-          style={styles.input}
-          value={city}
-          onChangeText={(text) => setCity(text)}
-          placeholder="Type a city name"
-        />
-        <TouchableOpacity>
-          <Button
-            title="Submit"
-            style={styles.btnSearch}
-            onPress={handleOnSearchRestaurants}
+    <SafeAreaView>
+
+      <View style={styles.view}>
+        <Text style={styles.textHello}>Hello! {user.email}</Text>
+        <Text style={styles.textSearch}>Search restaurants</Text>
+        <View style={styles.viewInput}>
+          <TextInput
+            style={styles.input}
+            value={city}
+            onChangeText={(text) => setCity(text)}
+            placeholder="Type a city name"
           />
-        </TouchableOpacity>
-      </View>
-      <TouchableOpacity>
-        <Text style={styles.useMyLocationText} onPress={handleOnUseMyLocation}>Use my location</Text>
-      </TouchableOpacity>
-      <View style={styles.restaurantsView}>
-        {restaurants.length > 0 ? (
-          <>
-            <Text style={styles.titleRestaurants}>Restaurants</Text>
-            <FlatList
-              data={restaurants}
-              renderItem={({ item }) => {
-                return (
-                  <Restaurant name={item.name} />
-                )
-              }}
-              keyExtractor={(item => item.id)}
+          <TouchableOpacity>
+            <Button
+              title="Submit"
+              style={styles.btnSearch}
+              onPress={handleOnSearchRestaurants}
             />
-          </>
-        ) : null}
-        {loading ? <Loader /> : null}
+          </TouchableOpacity>
+        </View>
+        <TouchableOpacity>
+          <Text style={styles.useMyLocationText} onPress={handleOnUseMyLocation}>Use my location</Text>
+        </TouchableOpacity>
+        <View style={styles.restaurantsView}>
+          {restaurants.length > 0 ? (
+            <>
+              <Text style={styles.titleRestaurants}>Restaurants</Text>
+              <FlatList
+                data={restaurants}
+                renderItem={({ item }) => {
+                  return (
+                    <Restaurant name={item.name} />
+                  )
+                }}
+                keyExtractor={(item => item.id)}
+              />
+            </>
+          ) : null}
+          {loading ? <Loader /> : null}
+        </View>
+        <Button title="Log out" onPress={() => signOut()} />
       </View>
-      <Button title="Log out" onPress={() => signOut()} />
-    </View>
+    </SafeAreaView>
   )
 }
 
@@ -185,6 +202,19 @@ const styles = StyleSheet.create({
   },
   useMyLocationText: {
     marginBottom: 16,
+  },
+  pleaseLoginView: {
+    padding: 16,
+    flexDirection: 'row',
+    alignItems: 'center'
+  },
+  pleaseText: {
+    fontSize: 16,
+  },
+  pleaseBtn: {
+    padding: 0,
+    height: 10,
+    fontSize: 12,
   }
 })
 
