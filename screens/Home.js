@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { View, Text, Button, TextInput, StyleSheet, FlatList } from 'react-native'
+import { View, Text, Button, TextInput, StyleSheet, FlatList, TouchableOpacity } from 'react-native'
 import auth from '@react-native-firebase/auth'
 import Loader from '../components/Loader'
 import { signOut } from '../utils/auth'
@@ -7,8 +7,6 @@ import { searchCity, getCityCoords } from '../utils/city'
 import { searchRestaurants, getRestaurants } from '../utils/restaurant'
 
 const Restaurant = ({ name }) => {
-  console.log(name)
-
   return (
     <View style={styles.item}>
       <Text style={styles.name}>{name}</Text>
@@ -22,6 +20,7 @@ const Home = ({ navigation }) => {
   const [user, setUser] = useState(null)
   const [city, setCity] = useState('')
   const [restaurants, setRestaurants] = useState([]) 
+  const [loading, setLoading] = useState(false)
  
   // Handle user state changes
   const onAuthStateChanged = (user) => {
@@ -37,6 +36,8 @@ const Home = ({ navigation }) => {
   }, [])
   const handleOnSearchRestaurants = () => {
     if (city !== '') {
+      setRestaurants([])
+      setLoading(true)
       searchCity(city)
         .then((response) => response.json()) 
         .then((json) => {
@@ -48,9 +49,8 @@ const Home = ({ navigation }) => {
         .then(json => {
           const data = getRestaurants(json.results)
 
-          console.log('restaurants', data)
-
           setRestaurants(data)
+          setLoading(false)
         })
     }
   }
@@ -64,28 +64,41 @@ const Home = ({ navigation }) => {
   }
 
   return (
-    <View>
-      <Text>Home {user.email}</Text>
-      <Text>Search restaurants</Text>
-      <TextInput
-        style={styles.input}
-        value={city}
-        onChangeText={(text) => setCity(text)}
-        placeholder="City"
-      />
-      <Button title="Submit" onPress={handleOnSearchRestaurants} />
-      <Text>Restaurants</Text>
-      {restaurants.length > 0 ? (
-        <FlatList
-          data={restaurants}
-          renderItem={({ item }) => {
-            return (
-              <Restaurant name={item.name} />
-            )
-          }}
-          keyExtractor={(item => item.id)}
+    <View style={styles.view}>
+      <Text style={styles.textHello}>Hello! {user.email}</Text>
+      <Text style={styles.textSearch}>Search restaurants</Text>
+      <View style={styles.viewInput}>
+        <TextInput
+          style={styles.input}
+          value={city}
+          onChangeText={(text) => setCity(text)}
+          placeholder="Type a city name"
         />
-      ) : null}
+        <TouchableOpacity>
+          <Button
+            title="Submit"
+            style={styles.btnSearch}
+            onPress={handleOnSearchRestaurants}
+          />
+        </TouchableOpacity>
+      </View>
+      <View style={styles.restaurantsView}>
+        {restaurants.length > 0 ? (
+          <>
+            <Text style={styles.titleRestaurants}>Restaurants</Text>
+            <FlatList
+              data={restaurants}
+              renderItem={({ item }) => {
+                return (
+                  <Restaurant name={item.name} />
+                )
+              }}
+              keyExtractor={(item => item.id)}
+            />
+          </>
+        ) : null}
+        {loading ? <Loader /> : null}
+      </View>
       <Button title="Log out" onPress={() => signOut()} />
     </View>
   )
@@ -97,14 +110,12 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   view: {
-    justifyContent: 'center',
-    alignItems: 'center',
-    flex: 1,
+    padding: 16,
   },
   input: {
     paddingLeft: 16,
     marginBottom: 16,
-    width: '80%',
+    width: '70%',
     height: 40,
     borderWidth: 1,
     borderColor: 'gray',
@@ -117,6 +128,26 @@ const styles = StyleSheet.create({
   },
   name: {
     fontSize: 16,
+  },
+  textHello: {
+    fontSize: 16,
+    fontWeight: '700',
+    marginBottom: 16,
+  },
+  textSearch: {
+    marginBottom: 16,
+  },
+  viewInput: {
+    flexDirection: 'row',
+  },
+  btnSearch: {
+    width: '20%',
+  },
+  titleRestaurants: {
+    marginBottom: 16,
+  },
+  restaurantsView: {
+    height: 400
   },
 })
 
