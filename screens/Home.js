@@ -7,10 +7,11 @@ import { searchCity, getCityCoords, searchCityByCoords, getCurrentLocation } fro
 import { searchRestaurants, getRestaurants } from '../utils/restaurant'
 import Geolocation from '@react-native-community/geolocation'
 
-const Restaurant = ({ name }) => {
+const Restaurant = ({ name, rating }) => {
   return (
     <View style={styles.item}>
       <Text style={styles.name}>{name}</Text>
+      <Text style={styles.rating}>Rating: {rating}</Text>
     </View>
   );
 }
@@ -140,7 +141,7 @@ const Home = ({ navigation }) => {
                 data={restaurants}
                 renderItem={({ item }) => {
                   return (
-                    <Restaurant name={item.name} />
+                    <Restaurant name={item.name} rating={item.rating} />
                   )
                 }}
                 keyExtractor={(item => item.id)}
@@ -215,6 +216,10 @@ const styles = StyleSheet.create({
     padding: 0,
     height: 10,
     fontSize: 12,
+  },
+  rating: {
+    fontSize: 14,
+    fontWeight: '500'
   }
 })
 
